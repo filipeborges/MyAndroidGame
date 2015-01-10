@@ -1,0 +1,46 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity" >
+
+    <ImageView
+        android:id="@+id/mainBackgroundImgView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="false"
+        android:background="@color/main_screen_background_color" />
+
+    <ImageView
+        android:id="@+id/mainIconImgView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp"
+        android:adjustViewBounds="true"
+        android:maxHeight="100dp"
+        android:maxWidth="100dp"
+        android:src="@drawable/main_screen_icon_resize" />
+
+    <ImageView
+        android:id="@+id/mainTitleImgView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/mainIconImgView"
+        android:layout_marginTop="28dp"
+        android:src="@drawable/game_title" />
+
+    <ImageView
+        android:id="@+id/mainTouchStartImgView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/mainTitleImgView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="94dp"
+        android:adjustViewBounds="true"
+        android:maxHeight="20dp"
+        android:maxWidth="150dp"
+        android:src="@drawable/touch_to_start" />
+
+</RelativeLayout>
