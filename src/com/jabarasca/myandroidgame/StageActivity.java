@@ -19,10 +19,16 @@ public class StageActivity extends Activity {
 		setContentView(R.layout.stage_screen);
 		
 		stageSurfaceView = (StageSurfaceView)findViewById(R.id.stageSurfaceView);
-		startPoint = this.createPoint(0, 0);
+		startPoint = this.createPoint(20, 20);
 		endPoint = this.createPoint(this.getWindowManager().getDefaultDisplay().getWidth(), this.getWindowManager().getDefaultDisplay().getHeight());
 		paint = this.createPaint(Color.RED, (float)1.8);
 		stageSurfaceView.drawSingleLineStage(startPoint, endPoint, paint);
+		
+		startPoint = this.createPoint(0, 0);
+		endPoint.x = 1;
+		endPoint.y = 1;
+		paint = this.createPaint(Color.GREEN, (float)1.8);
+		stageSurfaceView.drawObjectInLine(startPoint, endPoint, paint);
 	}
 	
 	private Point createPoint(int x, int y) {
