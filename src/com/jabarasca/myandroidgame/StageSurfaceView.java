@@ -1,47 +1,51 @@
 package com.jabarasca.myandroidgame;
 
-import android.view.SurfaceView;
 import android.content.Context;
-import android.view.SurfaceHolder;
-import android.util.AttributeSet;
-import android.os.AsyncTask;
 import android.graphics.Point;
 import android.graphics.Paint;
 import android.graphics.Canvas;
-
-/*Desenho anterior não esta sendo preservado na superficie.*/
-/*Usando o mesmo Paint, na hora que outro esta desenhando.*/
-/*Tentar usar um semáforo pra sincronizar as operações.*/
+import android.graphics.Bitmap;
+import android.view.ViewTreeObserver;
+import android.view.SurfaceView;
+import android.view.SurfaceHolder;
+import android.util.AttributeSet;
 
 public class StageSurfaceView extends SurfaceView {
-	
 	private boolean surfaceIsValid = false;
-	private Paint paint;
+	private Bitmap stageBitmap = null;
 	private SurfaceHolder surfaceHolder;
-	private SurfaceHolder.Callback callbacks = new SurfaceHolder.Callback() {
-		@Override
-		public void surfaceDestroyed(SurfaceHolder holder) {
-			surfaceIsValid = false;
-		}
-		
-		@Override
-		public void surfaceCreated(SurfaceHolder holder) {
-			surfaceIsValid = true;
-		}
-		
-		@Override
-		public void surfaceChanged(SurfaceHolder holder, int format, int width,
-				int height) {}
-	};
 	
 	public StageSurfaceView(Context context, AttributeSet attr) {
 		super(context, attr);
 		surfaceHolder = this.getHolder();
-		surfaceHolder.addCallback(callbacks);
-	}
+		
+		surfaceHolder.addCallback(new SurfaceHolder.Callback() {
+			@Override
+			public void surfaceDestroyed(SurfaceHolder holder) {
+				surfaceIsValid = false;
+			}
+			
+			@Override
+			public void surfaceCreated(SurfaceHolder holder) {
+				surfaceIsValid = true;
+			}
+			
+			@Override
+			public void surfaceChanged(SurfaceHolder holder, int format, int width,
+					int height) {}
+		});
+		
+		this.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+			@Override
+			public boolean onPreDraw() {
+				setupStageBitmap();
+				return true;
+			}
+		});
+	}//End of Constructor.
 	
 	//Return true only if draws a Line on the screen.
-	public boolean drawSingleLineStage(Point startPoint, Point endPoint, Paint paint) {
+	public boolean drawSingleLineStage(Point startPoint, Point endPoint, Paint paint) {			
 		if(paint == null || startPoint == null || endPoint == null) {
 			return false;
 		}else {
@@ -57,86 +61,51 @@ public class StageSurfaceView extends SurfaceView {
 		final int startY = startPoint.y;
 		final int endX = endPoint.x;
 		final int endY = endPoint.y;
-		this.paint = paint;
 		
-		DrawThread draw = new DrawThread(DrawThread.DRAW_SINGLE_LINE_STAGE);
-		draw.execute(startX, startY, endX, endY);
-		
-		return true;
-	}
-	
-	public boolean drawObjectInLine(Point startPoint, Point endPoint, Paint paint) {
-		final int smallerX, smallerY, biggerX, biggerY;
-		
-		if(startPoint.x > endPoint.x) {
-			biggerX = startPoint.x;
-			smallerX = endPoint.y;
-		}
-		else {
-			biggerX = endPoint.x;
-			smallerX = startPoint.x;
-		}
-		
-		if(startPoint.y > endPoint.y) {
-			biggerY = startPoint.y;
-			smallerY = endPoint.y;
-		}
-		else {
-			biggerY = endPoint.y;
-			smallerY = startPoint.y;
-		}
-		
-		this.paint = paint; 
-		
-		DrawThread draw = new DrawThread(DrawThread.DRAW_OBJECT_IN_LINE);
-		draw.execute(smallerX, smallerY, biggerX, biggerY);
+		DrawStageTask drawTask = new DrawStageTask();
+		drawTask.setupDrawSingleLine(startX, startY, endX, endY, paint);
+		new Thread(drawTask).start();
 		
 		return true;
+	}//End drawSingleLineStage.
+	
+	private void setupStageBitmap() {
+		if(stageBitmap == null) {
+			stageBitmap = Bitmap.createBitmap(this.getWidth(), this.getHeight(), Bitmap.Config.ARGB_8888);
+		}
 	}
 	
-	private class DrawThread extends AsyncTask<Integer, Void, Void> {
-		
-		public static final int DRAW_SINGLE_LINE_STAGE = 1;
-		public static final int DRAW_OBJECT_IN_LINE = 2;
+	private class DrawStageTask implements Runnable {
+		private final int DRAW_SINGLE_LINE = 1;
 		private int mode;
+		private int startX, startY, endX, endY;
+		private Paint paint;
 		
-		public DrawThread(int mode) {
-			this.mode = mode;
+		public void setupDrawSingleLine(int startX, int startY, int endX, int endY, Paint paint) {
+			this.startX = startX;
+			this.startY = startY;
+			this.endX = endX;
+			this.endY = endY;
+			this.paint = paint;
+			this.mode = DRAW_SINGLE_LINE;
 		}
 		
 		@Override
-		protected Void doInBackground(Integer... params) {
+		public void run() {
 			while(!surfaceIsValid){}
-			
 			switch(mode) {
-				case DRAW_SINGLE_LINE_STAGE:
-					this.drawSingleLine(params[0], params[1], params[2], params[3]);
-					break;
-				case DRAW_OBJECT_IN_LINE:
-					this.drawObjectInLine(params[0], params[1], params[2], params[3]);
+				case DRAW_SINGLE_LINE:
+					this.drawSingleLine(startX, startY, endX, endY, paint);
 					break;
 			}
-			
-			return null;
 		}
 		
-		private void drawSingleLine(int startX, int startY, int endX, int endY) {
-			Canvas canvas = surfaceHolder.lockCanvas();
-			canvas.drawLine(startX, startY, endX, endY, paint);
-			surfaceHolder.unlockCanvasAndPost(canvas);
+		private void drawSingleLine(int startX, int startY, int endX, int endY, Paint paint) {
+			Canvas stageCanvas = new Canvas(stageBitmap);
+			Canvas surfaceViewCanvas = surfaceHolder.lockCanvas();
+			stageCanvas.drawLine(startX, startY, endX, endY, paint);
+			surfaceViewCanvas.drawBitmap(stageBitmap, 0, 0, null);
+			surfaceHolder.unlockCanvasAndPost(surfaceViewCanvas);
 		}
-		
-		//Jogar public para fins de teste??
-		private void drawObjectInLine(float smallerX, float smallerY, float biggerX, float biggerY) {
-			final float tanAlpha = (biggerY - smallerY)/(biggerX - smallerX);
-			
-			for(float x = smallerX; x <= biggerX; x += 1) {
-				Canvas canvas = surfaceHolder.lockCanvas();
-				float y = (x - smallerX)*tanAlpha + smallerY;
-				canvas.drawPoint(x, y, paint);
-				surfaceHolder.unlockCanvasAndPost(canvas);
-			}
-		}
-	}
-	
+	}//End of DrawStageTask.
 }
