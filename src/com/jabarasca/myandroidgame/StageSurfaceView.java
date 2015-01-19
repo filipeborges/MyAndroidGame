@@ -5,6 +5,7 @@ import android.graphics.Point;
 import android.graphics.Paint;
 import android.graphics.Canvas;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.view.ViewTreeObserver;
 import android.view.SurfaceView;
 import android.view.SurfaceHolder;
@@ -45,7 +46,7 @@ public class StageSurfaceView extends SurfaceView {
 	}//End of Constructor.
 	
 	//Return true only if draws a Line on the screen.
-	public boolean drawSingleLineStage(Point startPoint, Point endPoint, Paint paint) {			
+	public boolean drawSingleLine(Point startPoint, Point endPoint, Paint paint) {			
 		if(paint == null || startPoint == null || endPoint == null) {
 			return false;
 		}else {
@@ -67,7 +68,21 @@ public class StageSurfaceView extends SurfaceView {
 		new Thread(drawTask).start();
 		
 		return true;
-	}//End drawSingleLineStage.
+	}//End drawSingleLine.
+	
+	//Return true only if draws a Rectangle or Square on the screen.
+	public boolean drawSingleRectangle(int left, int top, int right, int bottom, Paint paint) {
+		//Verificar se as coordenadas estão corretas.
+		if(left == right || top == bottom || paint == null || left < 0 || top < 0 || right < 0 || bottom < 0) {
+			return false;
+		}
+		
+		DrawStageTask drawTask = new DrawStageTask();
+		drawTask.setupDrawSingleRectangle(left, top, right, bottom, paint);
+		new Thread(drawTask).start();
+		
+		return true;
+	}//End drawSingleRectagle.
 	
 	private void setupStageBitmap() {
 		if(stageBitmap == null) {
@@ -77,8 +92,10 @@ public class StageSurfaceView extends SurfaceView {
 	
 	private class DrawStageTask implements Runnable {
 		private final int DRAW_SINGLE_LINE = 1;
-		private int mode;
 		private int startX, startY, endX, endY;
+		private final int DRAW_SINGLE_RECTANGLE = 2;
+		private int left, top, right, bottom;
+		private int mode = 0;
 		private Paint paint;
 		
 		public void setupDrawSingleLine(int startX, int startY, int endX, int endY, Paint paint) {
@@ -90,22 +107,43 @@ public class StageSurfaceView extends SurfaceView {
 			this.mode = DRAW_SINGLE_LINE;
 		}
 		
+		public void setupDrawSingleRectangle(int left, int top, int right, int bottom, Paint paint) {
+			this.left = left;
+			this.top = top;
+			this.right = right;
+			this.bottom = bottom;
+			this.paint = paint;
+			this.mode = DRAW_SINGLE_RECTANGLE;
+		}
+		
 		@Override
 		public void run() {
 			while(!surfaceIsValid){}
 			switch(mode) {
 				case DRAW_SINGLE_LINE:
-					this.drawSingleLine(startX, startY, endX, endY, paint);
+					this.drawSingleLine();
+					break;
+				case DRAW_SINGLE_RECTANGLE:
+					this.drawSingleRectangle();
 					break;
 			}
 		}
 		
-		private void drawSingleLine(int startX, int startY, int endX, int endY, Paint paint) {
-			Canvas stageCanvas = new Canvas(stageBitmap);
-			Canvas surfaceViewCanvas = surfaceHolder.lockCanvas();
-			stageCanvas.drawLine(startX, startY, endX, endY, paint);
-			surfaceViewCanvas.drawBitmap(stageBitmap, 0, 0, null);
-			surfaceHolder.unlockCanvasAndPost(surfaceViewCanvas);
+		private void drawSingleRectangle() {
+			Rect square = new Rect(left, top, right, bottom);
+			Canvas canvas = new Canvas(stageBitmap);
+			canvas.drawRect(square, paint);
+			canvas = surfaceHolder.lockCanvas();
+			canvas.drawBitmap(stageBitmap, 0, 0, null);
+			surfaceHolder.unlockCanvasAndPost(canvas);
+		}
+		
+		private void drawSingleLine() {
+			Canvas canvas = new Canvas(stageBitmap);
+			canvas.drawLine(startX, startY, endX, endY, paint);
+			canvas = surfaceHolder.lockCanvas();	
+			canvas.drawBitmap(stageBitmap, 0, 0, null);
+			surfaceHolder.unlockCanvasAndPost(canvas);
 		}
 	}//End of DrawStageTask.
 }
