@@ -22,14 +22,14 @@ public class StageActivity extends Activity {
 		startPoint = this.createPoint(0, 0);
 		endPoint = this.createPoint(this.getWindowManager().getDefaultDisplay().getWidth(), this.getWindowManager().getDefaultDisplay().getHeight());
 		paint = this.createPaint(Color.RED, (float)1.8);
-		stageSurfaceView.drawSingleLineStage(startPoint, endPoint, paint);
+		stageSurfaceView.drawSingleLine(startPoint, endPoint, paint);
 		
-		paint = this.createPaint(Color.GREEN, (float)3.8);
+		paint = this.createPaint(Color.GREEN, (float)1.8);
 		startPoint = this.createPoint(0, this.getWindowManager().getDefaultDisplay().getHeight()/2);
 		endPoint = this.createPoint(this.getWindowManager().getDefaultDisplay().getWidth(), this.getWindowManager().getDefaultDisplay().getHeight()/2);
-		stageSurfaceView.drawSingleLineStage(startPoint, endPoint, paint);
+		stageSurfaceView.drawSingleLine(startPoint, endPoint, paint);
 		
-		
+		stageSurfaceView.drawSingleRectangle(10, 10, 60, 60, paint);
 	}
 	
 	private Point createPoint(int x, int y) {
